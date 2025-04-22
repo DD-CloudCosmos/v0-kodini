@@ -1,105 +1,100 @@
 "use server"
 
-import { generateGuidance } from "@/lib/ai-orchestration"
 import { createServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
+import { z } from "zod"
+import { generateGuidance } from "@/lib/ai-orchestration"
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 
-export async function getGuidanceByTask(taskId: string) {
-  const supabase = createServerClient()
+// Schema for guidance
+const guidanceSchema = z.object({
+  id: z.string().uuid().optional(),
+  task_id: z.string().uuid(),
+  steps: z.array(
+    z.object({
+      step: z.string(),
+      rationale: z.string().optional(),
+    }),
+  ),
+  summary: z.string().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+})
 
-  const { data, error } = await supabase.from("guidance").select("*").eq("task_id", taskId).single()
+export type Guidance = z.infer<typeof guidanceSchema>
+
+// Get guidance for a task
+export async function getGuidanceForTask(taskId: string) {
+  const cookieStore = cookies()
+  const supabase = createServerClient(cookieStore)
+
+  const { data, error } = await supabase
+    .from("guidance")
+    .select("*")
+    .eq("task_id", taskId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single()
 
   if (error && error.code !== "PGRST116") {
-    // PGRST116 is the error code for "no rows returned"
     console.error("Error fetching guidance:", error)
-    throw new Error("Failed to fetch guidance")
+    return null
   }
 
-  return data
+  return data as Guidance | null
 }
 
-export async function createGuidance(taskId: string, steps: any[], codeExamples?: any[], summary?: string) {
-  const supabase = createServerClient()
+// Generate guidance for a task
+export async function generateGuidanceForTask(taskId: string, taskDescription: string) {
+  try {
+    const cookieStore = cookies()
+    const supabase = createServerClient(cookieStore)
 
-  const { data, error } = await supabase
-    .from("guidance")
-    .insert([
-      {
+    // Generate guidance using AI
+    const guidanceData = await generateGuidance(taskDescription)
+
+    // Save guidance to database
+    const { data, error } = await supabase
+      .from("guidance")
+      .insert({
         task_id: taskId,
-        steps,
-        code_examples: codeExamples || null,
-        summary: summary || null,
-      },
-    ])
-    .select()
+        steps: guidanceData.steps,
+        summary: guidanceData.summary,
+      })
+      .select()
+      .single()
 
-  if (error) {
-    console.error("Error creating guidance:", error)
-    throw new Error("Failed to create guidance")
+    if (error) {
+      console.error("Error saving guidance:", error)
+      throw new Error("Failed to save guidance")
+    }
+
+    revalidatePath(`/guidance/[projectId]/task/${taskId}`)
+    return data as Guidance
+  } catch (error) {
+    console.error("Error generating guidance:", error)
+    throw new Error("Failed to generate guidance")
   }
-
-  revalidatePath(`/guidance`)
-  return data[0]
 }
 
-export async function updateGuidance(id: string, steps: any[], codeExamples?: any[], summary?: string) {
-  const supabase = createServerClient()
+// Delete guidance
+export async function deleteGuidance(guidanceId: string, taskId: string, projectId: string) {
+  try {
+    const cookieStore = cookies()
+    const supabase = createServerClient(cookieStore)
 
-  const { data, error } = await supabase
-    .from("guidance")
-    .update({
-      steps,
-      code_examples: codeExamples || null,
-      summary: summary || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .select()
+    const { error } = await supabase.from("guidance").delete().eq("id", guidanceId)
 
-  if (error) {
-    console.error("Error updating guidance:", error)
-    throw new Error("Failed to update guidance")
-  }
+    if (error) {
+      console.error("Error deleting guidance:", error)
+      throw new Error("Failed to delete guidance")
+    }
 
-  revalidatePath(`/guidance`)
-  return data[0]
-}
-
-export async function deleteGuidance(id: string) {
-  const supabase = createServerClient()
-
-  const { error } = await supabase.from("guidance").delete().eq("id", id)
-
-  if (error) {
+    revalidatePath(`/guidance/${projectId}/task/${taskId}`)
+    redirect(`/guidance/${projectId}/task/${taskId}`)
+  } catch (error) {
     console.error("Error deleting guidance:", error)
     throw new Error("Failed to delete guidance")
-  }
-
-  revalidatePath(`/guidance`)
-}
-
-export async function generateAndCreateGuidance(
-  taskId: string,
-  projectTitle: string,
-  asA: string,
-  iWantTo: string,
-  soThat: string,
-  taskDescription: string,
-) {
-  try {
-    const guidanceResponse = await generateGuidance(projectTitle, asA, iWantTo, soThat, taskDescription)
-
-    // Create the guidance in the database
-    const guidance = await createGuidance(
-      taskId,
-      guidanceResponse.steps,
-      guidanceResponse.codeExamples,
-      guidanceResponse.summary,
-    )
-
-    return guidance
-  } catch (error) {
-    console.error("Error generating and creating guidance:", error)
-    throw new Error("Failed to generate and create guidance")
   }
 }

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase/client"
+import { getSupabaseClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 type User = any | null
@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = getSupabaseClient().auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
       router.refresh()
@@ -38,12 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password })
     return { error }
   }
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await getSupabaseClient().auth.signUp({
       email,
       password,
       options: {
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     router.push("/login")
   }
 

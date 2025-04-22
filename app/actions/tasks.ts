@@ -38,6 +38,19 @@ export async function getTasksByProject(projectId: string) {
   return data
 }
 
+export async function getTask(id: string) {
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase.from("tasks").select("*").eq("id", id).single()
+
+  if (error) {
+    console.error("Error fetching task:", error)
+    throw new Error("Failed to fetch task")
+  }
+
+  return data
+}
+
 export async function createTask(storyId: string, description: string, rationale?: string) {
   const supabase = createServerClient()
 
