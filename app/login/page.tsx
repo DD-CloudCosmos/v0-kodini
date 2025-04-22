@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { getSupabaseClient } from "@/lib/supabase"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { signIn } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -25,7 +26,11 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await signIn(email, password)
+      const supabase = getSupabaseClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
       if (error) {
         toast({
@@ -33,6 +38,7 @@ export default function LoginPage() {
           description: error.message,
           variant: "destructive",
         })
+        setIsLoading(false)
         return
       }
 
@@ -48,6 +54,7 @@ export default function LoginPage() {
         description: error.message || "An error occurred during login.",
         variant: "destructive",
       })
+      setIsLoading(false)
     } finally {
       setIsLoading(false)
     }

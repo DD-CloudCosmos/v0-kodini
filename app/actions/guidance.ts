@@ -1,11 +1,10 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
-import { z } from "zod"
 import { generateGuidance } from "@/lib/ai-orchestration"
+import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { z } from "zod"
 
 // Schema for guidance
 const guidanceSchema = z.object({
@@ -26,8 +25,7 @@ export type Guidance = z.infer<typeof guidanceSchema>
 
 // Get guidance for a task
 export async function getGuidanceForTask(taskId: string) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createServerClient()
 
   const { data, error } = await supabase
     .from("guidance")
@@ -46,13 +44,19 @@ export async function getGuidanceForTask(taskId: string) {
 }
 
 // Generate guidance for a task
-export async function generateGuidanceForTask(taskId: string, taskDescription: string) {
+export async function generateGuidanceForTask(
+  taskId: string,
+  taskDescription: string,
+  projectTitle: string,
+  asA: string,
+  iWantTo: string,
+  soThat: string,
+) {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient()
 
     // Generate guidance using AI
-    const guidanceData = await generateGuidance(taskDescription)
+    const guidanceData = await generateGuidance(projectTitle, asA, iWantTo, soThat, taskDescription)
 
     // Save guidance to database
     const { data, error } = await supabase
@@ -70,7 +74,7 @@ export async function generateGuidanceForTask(taskId: string, taskDescription: s
       throw new Error("Failed to save guidance")
     }
 
-    revalidatePath(`/guidance/[projectId]/task/${taskId}`)
+    revalidatePath(`/guidance`)
     return data as Guidance
   } catch (error) {
     console.error("Error generating guidance:", error)
@@ -81,8 +85,7 @@ export async function generateGuidanceForTask(taskId: string, taskDescription: s
 // Delete guidance
 export async function deleteGuidance(guidanceId: string, taskId: string, projectId: string) {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient()
 
     const { error } = await supabase.from("guidance").delete().eq("id", guidanceId)
 

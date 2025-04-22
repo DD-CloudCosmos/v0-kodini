@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { getSupabaseClient } from "@/lib/supabase"
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
@@ -18,7 +19,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { signUp } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -37,7 +38,16 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const { error, data } = await signUp(email, password, name)
+      const supabase = getSupabaseClient()
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+        },
+      })
 
       if (error) {
         toast({
@@ -45,6 +55,7 @@ export default function RegisterPage() {
           description: error.message,
           variant: "destructive",
         })
+        setIsLoading(false)
         return
       }
 
@@ -60,6 +71,7 @@ export default function RegisterPage() {
         description: error.message || "An error occurred during registration.",
         variant: "destructive",
       })
+      setIsLoading(false)
     } finally {
       setIsLoading(false)
     }

@@ -10,7 +10,7 @@ type User = any | null
 
 interface AuthContextType {
   user: User
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signIn: (email: string, password: string) => Promise<{ error: any; data: any }>
   signUp: (email: string, password: string, name: string) => Promise<{ error: any; data: any }>
   signOut: () => Promise<void>
   loading: boolean
@@ -24,9 +24,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
+    const supabase = getSupabaseClient()
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    // Set up auth state change listener
     const {
       data: { subscription },
-    } = getSupabaseClient().auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
       router.refresh()
@@ -38,8 +47,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password })
-    return { error }
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (!error) {
+      setUser(data.user)
+      router.refresh()
+    }
+
+    return { data, error }
   }
 
   const signUp = async (email: string, password: string, name: string) => {

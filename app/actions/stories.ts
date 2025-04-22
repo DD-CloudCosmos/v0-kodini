@@ -20,6 +20,19 @@ export async function getStoriesByProject(projectId: string) {
   return data
 }
 
+export async function getStory(id: string) {
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase.from("stories").select("*").eq("id", id).single()
+
+  if (error) {
+    console.error("Error fetching story:", error)
+    throw new Error("Failed to fetch story")
+  }
+
+  return data
+}
+
 export async function createStory(
   projectId: string,
   title: string,

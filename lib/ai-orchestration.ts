@@ -77,14 +77,14 @@ For each refined idea, provide:
 
 Format your response as valid JSON with the following structure:
 {
-  "ideas": [
-    {
-      "title": "string",
-      "description": "string",
-      "tags": ["string", "string"]
-    },
-    ...
-  ]
+"ideas": [
+  {
+    "title": "string",
+    "description": "string",
+    "tags": ["string", "string"]
+  },
+  ...
+]
 }
 `
 
@@ -104,14 +104,14 @@ For each variation, provide:
 
 Format your response as valid JSON with the following structure:
 {
-  "ideas": [
-    {
-      "title": "string",
-      "description": "string",
-      "tags": ["string", "string"]
-    },
-    ...
-  ]
+"ideas": [
+  {
+    "title": "string",
+    "description": "string",
+    "tags": ["string", "string"]
+  },
+  ...
+]
 }
 `
 
@@ -131,13 +131,13 @@ For each task, provide:
 
 Format your response as valid JSON with the following structure:
 {
-  "tasks": [
-    {
-      "description": "string",
-      "rationale": "string"
-    },
-    ...
-  ]
+"tasks": [
+  {
+    "description": "string",
+    "rationale": "string"
+  },
+  ...
+]
 }
 
 Ensure the tasks cover both frontend and backend aspects where applicable, and follow a logical sequence.
@@ -167,23 +167,23 @@ Additionally, provide 1-3 code examples that demonstrate key aspects of the impl
 
 Format your response as valid JSON with the following structure:
 {
-  "steps": [
-    {
-      "step": "string",
-      "rationale": "string"
-    },
-    ...
-  ],
-  "codeExamples": [
-    {
-      "title": "string",
-      "language": "string",
-      "code": "string",
-      "explanation": "string"
-    },
-    ...
-  ],
-  "summary": "string"
+"steps": [
+  {
+    "step": "string",
+    "rationale": "string"
+  },
+  ...
+],
+"codeExamples": [
+  {
+    "title": "string",
+    "language": "string",
+    "code": "string",
+    "explanation": "string"
+  },
+  ...
+],
+"summary": "string"
 }
 
 Focus on providing educational guidance that helps the developer learn while implementing. Avoid providing complete solutions that the developer can copy-paste without understanding.

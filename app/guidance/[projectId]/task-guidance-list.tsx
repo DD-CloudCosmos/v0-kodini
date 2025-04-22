@@ -2,15 +2,14 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import type { Story, Task } from "@/lib/types"
 import { CheckCircle2, Circle, FileText, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 interface TaskGuidanceListProps {
-  tasks: Task[]
+  tasks: any[]
   projectId: string
-  story: Story
+  story: any
 }
 
 export function TaskGuidanceList({ tasks, projectId, story }: TaskGuidanceListProps) {
@@ -32,7 +31,7 @@ export function TaskGuidanceList({ tasks, projectId, story }: TaskGuidanceListPr
             tasks.map((task) => (
               <div key={task.id} className="flex items-start gap-3 border-b pb-4 last:border-0 last:pb-0">
                 <div className="mt-0.5 text-muted-foreground">
-                  {task.status === "completed" ? (
+                  {task.is_completed ? (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   ) : (
                     <Circle className="h-5 w-5" />
