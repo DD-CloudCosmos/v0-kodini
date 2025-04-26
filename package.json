@@ -57,12 +57,12 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
-    "zod": "^3.24.1",
+    "zod": "latest",
     "@supabase/supabase-js": "latest",
-    "@supabase/auth-helpers-nextjs": "latest",
     "ai": "latest",
     "@ai-sdk/openai": "latest",
-    "@ai-sdk/azure": "latest"
+    "@ai-sdk/azure": "latest",
+    "@supabase/auth-helpers-nextjs": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

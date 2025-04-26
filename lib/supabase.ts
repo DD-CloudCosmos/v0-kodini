@@ -1,28 +1,28 @@
 import { createClient } from "@supabase/supabase-js"
+import type { Database } from "./types"
 
 // Singleton pattern for Supabase client
-let supabaseInstance: ReturnType<typeof createClient> | null = null
+let supabaseClient: ReturnType<typeof createClient> | null = null
 
-export const getSupabaseClient = () => {
-  if (supabaseInstance) return supabaseInstance
+export function getSupabaseClient() {
+  if (supabaseClient) return supabaseClient
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase URL or Anon Key is missing")
-    throw new Error("Supabase configuration is incomplete")
+    throw new Error("Missing Supabase environment variables")
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
     },
   })
 
-  return supabaseInstance
+  return supabaseClient
 }
 
-// For backward compatibility
-export const supabase = getSupabaseClient()
+// Re-export from client for convenience
+export { supabase } from "./supabase/client"

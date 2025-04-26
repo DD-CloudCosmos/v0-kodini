@@ -4,24 +4,6 @@ import { generateGuidance } from "@/lib/ai-orchestration"
 import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { z } from "zod"
-
-// Schema for guidance
-const guidanceSchema = z.object({
-  id: z.string().uuid().optional(),
-  task_id: z.string().uuid(),
-  steps: z.array(
-    z.object({
-      step: z.string(),
-      rationale: z.string().optional(),
-    }),
-  ),
-  summary: z.string().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-})
-
-export type Guidance = z.infer<typeof guidanceSchema>
 
 // Get guidance for a task
 export async function getGuidanceForTask(taskId: string) {
@@ -40,17 +22,17 @@ export async function getGuidanceForTask(taskId: string) {
     return null
   }
 
-  return data as Guidance | null
+  return data
 }
 
 // Generate guidance for a task
 export async function generateGuidanceForTask(
   taskId: string,
   taskDescription: string,
-  projectTitle: string,
-  asA: string,
-  iWantTo: string,
-  soThat: string,
+  projectTitle = "Project",
+  asA = "user",
+  iWantTo = "complete this task",
+  soThat = "I can achieve my goal",
 ) {
   try {
     const supabase = createServerClient()
@@ -75,7 +57,7 @@ export async function generateGuidanceForTask(
     }
 
     revalidatePath(`/guidance`)
-    return data as Guidance
+    return data
   } catch (error) {
     console.error("Error generating guidance:", error)
     throw new Error("Failed to generate guidance")

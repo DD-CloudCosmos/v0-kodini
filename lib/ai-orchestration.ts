@@ -1,5 +1,3 @@
-"use server"
-
 import { generateText } from "ai"
 import { azure } from "@/lib/azure-openai"
 import { z } from "zod"

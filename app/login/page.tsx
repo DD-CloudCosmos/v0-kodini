@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,26 +11,29 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { getSupabaseClient } from "@/lib/supabase"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { user } = useAuth()
+  const { user, signIn } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard")
+    }
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const supabase = getSupabaseClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      // Use the signIn method from auth context instead of direct Supabase call
+      const { error } = await signIn(email, password)
 
       if (error) {
         toast({
@@ -47,14 +50,13 @@ export default function LoginPage() {
         description: "You have been logged in successfully.",
       })
 
-      router.push("/dashboard")
+      // The router.push will be handled by the useEffect when user state updates
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "An error occurred during login.",
         variant: "destructive",
       })
-      setIsLoading(false)
     } finally {
       setIsLoading(false)
     }

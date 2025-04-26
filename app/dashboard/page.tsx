@@ -1,11 +1,20 @@
 import { getProjects } from "@/app/actions/projects"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { PlusCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { PlusCircle, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 
 export default async function DashboardPage() {
-  const projects = await getProjects()
+  let projects = []
+  let error = null
+
+  try {
+    projects = await getProjects()
+  } catch (err) {
+    console.error("Error in dashboard:", err)
+    error = err instanceof Error ? err.message : "Failed to load projects"
+  }
 
   return (
     <div className="container mx-auto py-8">
@@ -18,6 +27,16 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error}. Please try refreshing the page or contact support if the problem persists.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects && projects.length > 0 ? (

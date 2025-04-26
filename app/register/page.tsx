@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { getSupabaseClient } from "@/lib/supabase"
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
@@ -19,7 +18,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { user } = useAuth()
+  const { signUp } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -38,16 +37,7 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const supabase = getSupabaseClient()
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-        },
-      })
+      const { error } = await signUp(email, password, name)
 
       if (error) {
         toast({
@@ -61,7 +51,7 @@ export default function RegisterPage() {
 
       toast({
         title: "Success",
-        description: "Your account has been created. Please check your email for verification.",
+        description: "Your account has been created. Please check your email to confirm your registration.",
       })
 
       router.push("/login")
@@ -71,7 +61,6 @@ export default function RegisterPage() {
         description: error.message || "An error occurred during registration.",
         variant: "destructive",
       })
-      setIsLoading(false)
     } finally {
       setIsLoading(false)
     }
@@ -93,7 +82,14 @@ export default function RegisterPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
