@@ -3,11 +3,15 @@
 import { generateTasks } from "@/lib/ai-orchestration"
 import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import type { Database } from "@/lib/types"
+
+type Task = Database["public"]["Tables"]["tasks"]["Row"]
+type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"]
+type TaskUpdate = Database["public"]["Tables"]["tasks"]["Update"]
 
 export async function getTasksByStory(storyId: string) {
   const supabase = createServerClient()
-
-  const { data, error } = await supabase
+  const { data, error } = await (await supabase)
     .from("tasks")
     .select("*")
     .eq("story_id", storyId)
@@ -22,7 +26,7 @@ export async function getTasksByStory(storyId: string) {
 }
 
 export async function getTasksByProject(projectId: string) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   const { data, error } = await supabase
     .from("tasks")
@@ -35,11 +39,11 @@ export async function getTasksByProject(projectId: string) {
     throw new Error("Failed to fetch tasks")
   }
 
-  return data
+  return data as Task[]
 }
 
 export async function getTask(id: string) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   const { data, error } = await supabase.from("tasks").select("*").eq("id", id).single()
 
@@ -48,21 +52,22 @@ export async function getTask(id: string) {
     throw new Error("Failed to fetch task")
   }
 
-  return data
+  return data as Task
 }
 
 export async function createTask(storyId: string, description: string, rationale?: string) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
+
+  const task: TaskInsert = {
+    story_id: storyId,
+    description,
+    rationale,
+    is_completed: false,
+  }
 
   const { data, error } = await supabase
     .from("tasks")
-    .insert([
-      {
-        story_id: storyId,
-        description,
-        rationale,
-      },
-    ])
+    .insert([task])
     .select()
 
   if (error) {
@@ -70,20 +75,22 @@ export async function createTask(storyId: string, description: string, rationale
     throw new Error("Failed to create task")
   }
 
-  revalidatePath(`/tasks`)
-  return data[0]
+  revalidatePath(`/tasks/${storyId}`)
+  return data[0] as Task
 }
 
 export async function updateTask(id: string, description: string, rationale?: string) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
+
+  const update: TaskUpdate = {
+    description,
+    rationale,
+    updated_at: new Date().toISOString(),
+  }
 
   const { data, error } = await supabase
     .from("tasks")
-    .update({
-      description,
-      rationale,
-      updated_at: new Date().toISOString(),
-    })
+    .update(update)
     .eq("id", id)
     .select()
 
@@ -93,11 +100,11 @@ export async function updateTask(id: string, description: string, rationale?: st
   }
 
   revalidatePath(`/tasks`)
-  return data[0]
+  return data[0] as Task
 }
 
 export async function deleteTask(id: string) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   const { error } = await supabase.from("tasks").delete().eq("id", id)
 
@@ -110,14 +117,16 @@ export async function deleteTask(id: string) {
 }
 
 export async function toggleTaskCompletion(id: string, isCompleted: boolean) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
+
+  const update: TaskUpdate = {
+    is_completed: isCompleted,
+    updated_at: new Date().toISOString(),
+  }
 
   const { data, error } = await supabase
     .from("tasks")
-    .update({
-      is_completed: isCompleted,
-      updated_at: new Date().toISOString(),
-    })
+    .update(update)
     .eq("id", id)
     .select()
 
@@ -127,7 +136,7 @@ export async function toggleTaskCompletion(id: string, isCompleted: boolean) {
   }
 
   revalidatePath(`/tasks`)
-  return data[0]
+  return data[0] as Task
 }
 
 export async function generateAndCreateTasks(

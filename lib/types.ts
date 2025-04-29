@@ -23,9 +23,9 @@ export interface Database {
         Update: {
           created_at?: string
           id?: string
-          steps: Json[]
+          steps?: Json[]
           summary?: string | null
-          task_id: string
+          task_id?: string
           code_examples?: Json[] | null
         }
         Relationships: [
@@ -57,10 +57,10 @@ export interface Database {
         Update: {
           created_at?: string
           id?: string
-          idea_text: string
-          title: string
+          idea_text?: string
+          title?: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -95,14 +95,14 @@ export interface Database {
           updated_at?: string
         }
         Update: {
-          as_a: string
+          as_a?: string
           created_at?: string
           id?: string
-          i_want_to: string
-          project_id: string
+          i_want_to?: string
+          project_id?: string
           rationale?: string | null
-          so_that: string
-          title: string
+          so_that?: string
+          title?: string
           updated_at?: string
         }
         Relationships: [
@@ -135,11 +135,11 @@ export interface Database {
         }
         Update: {
           created_at?: string
-          description: string
+          description?: string
           id?: string
           is_completed?: boolean
           rationale?: string | null
-          story_id: string
+          story_id?: string
           updated_at?: string
         }
         Relationships: [

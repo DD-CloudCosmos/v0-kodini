@@ -11,28 +11,28 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { PasswordInput } from "@/components/ui/password-input"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { user, signIn } = useAuth()
+  const { user, signIn, loading } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
   // Redirect if user is already logged in
   useEffect(() => {
-    if (user) {
+    if (!loading && user) {
       router.push("/dashboard")
     }
-  }, [user, router])
+  }, [user, loading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // Use the signIn method from auth context instead of direct Supabase call
       const { error } = await signIn(email, password)
 
       if (error) {
@@ -45,21 +45,24 @@ export default function LoginPage() {
         return
       }
 
-      toast({
-        title: "Success",
-        description: "You have been logged in successfully.",
-      })
-
-      // The router.push will be handled by the useEffect when user state updates
+      // No need for success toast here as the AuthProvider will handle the redirect
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "An error occurred during login.",
         variant: "destructive",
       })
-    } finally {
       setIsLoading(false)
     }
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -94,9 +97,8 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

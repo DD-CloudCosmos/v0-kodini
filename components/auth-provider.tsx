@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createContext, useContext, useEffect, useState, useRef } from "react"
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
@@ -26,19 +26,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Use a ref to store the Supabase client to prevent recreation on re-renders
   const supabaseRef = useRef(getSupabaseClient())
 
+  const handleAuthStateChange = useCallback(async (event: string, session: any) => {
+    console.log("Auth state changed:", event, session?.user?.id)
+    setUser(session?.user ?? null)
+    setLoading(false)
+
+    if (event === "SIGNED_IN") {
+      router.refresh() // Refresh the current route
+      router.push("/dashboard") // Navigate to dashboard
+    } else if (event === "SIGNED_OUT") {
+      router.refresh() // Refresh the current route
+      router.push("/login") // Navigate to login
+    }
+  }, [router])
+
   useEffect(() => {
     const supabase = supabaseRef.current
 
     // Check for existing session
     const checkSession = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        setUser(session?.user ?? null)
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          await handleAuthStateChange("SIGNED_IN", session)
+        } else {
+          setLoading(false)
+        }
       } catch (error) {
         console.error("Error checking session:", error)
-      } finally {
         setLoading(false)
       }
     }
@@ -46,24 +61,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession()
 
     // Set up auth state change listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id)
-      setUser(session?.user ?? null)
-      setLoading(false)
-
-      if (event === "SIGNED_IN") {
-        router.refresh()
-      } else if (event === "SIGNED_OUT") {
-        router.refresh()
-      }
-    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange)
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [router])
+  }, [handleAuthStateChange])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -73,12 +76,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       })
 
-      if (!error && data.user) {
-        setUser(data.user)
-        router.push("/dashboard")
+      if (error) {
+        return { data: null, error }
       }
 
-      return { data, error }
+      return { data, error: null }
     } catch (error) {
       console.error("Error during sign in:", error)
       return { data: null, error }
